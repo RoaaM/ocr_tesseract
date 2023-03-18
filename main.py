@@ -12,6 +12,9 @@ os.environ['TESSDATA_PREFIX'] = r'C:\Program Files\Tesseract-OCR\tessdata'
 # Set path to input folder
 input_folder = r'C:\Users\roaas\Downloads\images_for_experiments\images_for_experiments'
 
+# Set path to original text CSV file
+original_text_file = r"C:\Users\roaas\Documents\roaa_workspace\ocr_tesseract\original_text.csv"
+
 # Set path to output CSV file
 output_file = "output.csv"
 
@@ -33,21 +36,43 @@ def extract_text_from_image(img_path):
     # Extract text from the image using Tesseract
     text = pytesseract.image_to_string(processed_img)
 
-    return text
+    return text.strip()
 
-# Iterate over all image files in the input folder
-for filename in os.listdir(input_folder):
+# Read original text from CSV file
+original_text = {}
+with open(original_text_file, newline="", encoding="utf-8") as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        original_text[row[0]] = row[1].strip()
+
+# Process images in input folder
+filenames = [f for f in os.listdir(input_folder) if f.endswith('.jpg') or f.endswith('.png')]
+predicted_text = []
+for filename in filenames:
     file_path = os.path.join(input_folder, filename)
+    
+    # Extract text from image
+    text = extract_text_from_image(file_path)
+    
+    # Save predicted text
+    predicted_text.append(text)
 
-    if filename.endswith('.jpg') or filename.endswith('.png'):
-        # Extract text from image
-        text = extract_text_from_image(file_path)
-
-    else:
-        # Skip files that are not images
-        continue
-
-    # Save extracted text to CSV file
+    # Save extracted text to output CSV file
     with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow([filename, text])
+
+# Calculate accuracy
+def calculate_accuracy(y_true, y_pred):
+    correct = 0
+    for i in range(len(y_true)):
+        if y_true[i] == y_pred[i]:
+            correct += 1
+    accuracy = correct / len(y_true)
+    return accuracy
+
+y_true = [original_text[filename] for filename in filenames]
+accuracy = calculate_accuracy(y_true, predicted_text)
+
+# Print accuracy
+print("Accuracy:", accuracy)
