@@ -2,6 +2,7 @@ import cv2
 import pytesseract
 import csv
 import os
+import Levenshtein
 
 # Set path to Tesseract executable
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
@@ -13,7 +14,7 @@ os.environ['TESSDATA_PREFIX'] = r'C:\Program Files\Tesseract-OCR\tessdata'
 input_folder = r'C:\Users\roaas\Downloads\images_for_experiments\images_for_experiments'
 
 # Set path to original text CSV file
-original_text_file = r"C:\Users\roaas\Documents\roaa_workspace\ocr_tesseract\original_text.csv"
+original_text_file = r"C:\Users\roaas\Documents\roaa_workspace\ocr_tesseract\original_texts.csv"
 
 # Set path to output CSV file
 output_file = "output.csv"
@@ -47,7 +48,10 @@ with open(original_text_file, newline="", encoding="utf-8") as csvfile:
 
 # Process images in input folder
 filenames = [f for f in os.listdir(input_folder) if f.endswith('.jpg') or f.endswith('.png')]
+filenames = sorted(filenames, key=lambda x: int(x.split('.')[0][3:]))
+
 predicted_text = []
+accuracies = []
 for filename in filenames:
     file_path = os.path.join(input_folder, filename)
     
@@ -56,23 +60,17 @@ for filename in filenames:
     
     # Save predicted text
     predicted_text.append(text)
+    
+    # Calculate Levenshtein distance and accuracy
+    distance = Levenshtein.distance(text, original_text[filename])
+    accuracy = 1 - (distance / len(original_text[filename]))
+    accuracies.append(accuracy)
 
-    # Save extracted text to output CSV file
+    # Save extracted text and accuracy to output CSV file
     with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
-        writer.writerow([filename, text])
+        writer.writerow([filename, text, accuracy])
 
-# Calculate accuracy
-def calculate_accuracy(y_true, y_pred):
-    correct = 0
-    for i in range(len(y_true)):
-        if y_true[i] == y_pred[i]:
-            correct += 1
-    accuracy = correct / len(y_true)
-    return accuracy
-
-y_true = [original_text[filename] for filename in filenames]
-accuracy = calculate_accuracy(y_true, predicted_text)
-
-# Print accuracy
-print("Accuracy:", accuracy)
+# Calculate average accuracy
+avg_accuracy = sum(accuracies) / len(accuracies)
+print(f"Average accuracy: {avg_accuracy:.2%}")
