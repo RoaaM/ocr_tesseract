@@ -48,27 +48,26 @@ with open(original_text_file, newline="", encoding="utf-8") as csvfile:
 
 # Process images in input folder
 filenames = [f for f in os.listdir(input_folder) if f.endswith('.jpg') or f.endswith('.png')]
-filenames = sorted(filenames, key=lambda x: int(x.split('.')[0][3:]))
-
 predicted_text = []
 accuracies = []
-for filename in filenames:
-    file_path = os.path.join(input_folder, filename)
-    
-    # Extract text from image
-    text = extract_text_from_image(file_path)
-    
-    # Save predicted text
-    predicted_text.append(text)
-    
-    # Calculate Levenshtein distance and accuracy
-    distance = Levenshtein.distance(text, original_text[filename])
-    accuracy = 1 - (distance / len(original_text[filename]))
-    accuracies.append(accuracy)
+with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["Filename", "Extracted Text", "Accuracy"])
+    for filename in sorted(filenames):
+        file_path = os.path.join(input_folder, filename)
+        
+        # Extract text from image
+        text = extract_text_from_image(file_path)
+        
+        # Save predicted text
+        predicted_text.append(text)
+        
+        # Calculate Levenshtein distance and accuracy
+        distance = Levenshtein.distance(text, original_text[filename])
+        accuracy = 1 - (distance / len(original_text[filename]))
+        accuracies.append(accuracy)
 
-    # Save extracted text and accuracy to output CSV file
-    with open(output_file, "a", newline="", encoding="utf-8") as csvfile:
-        writer = csv.writer(csvfile)
+        # Save extracted text and accuracy to output CSV file
         writer.writerow([filename, text, accuracy])
 
 # Calculate average accuracy
