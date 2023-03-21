@@ -19,23 +19,13 @@ original_text_file = r"C:\Users\roaas\Documents\roaa_workspace\ocr_tesseract\ori
 # Set path to output CSV file
 output_file = "output.csv"
 
-# Preprocess image function
-def preprocess(img):
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    gray = cv2.medianBlur(gray, 3)
-    return gray
-
 # Extract text from image
 def extract_text_from_image(img_path):
     # Load image
     img = cv2.imread(img_path)
 
-    # Preprocess image
-    processed_img = preprocess(img)
-
     # Extract text from the image using Tesseract
-    text = pytesseract.image_to_string(processed_img)
+    text = pytesseract.image_to_string(img)
 
     return text.strip()
 
